@@ -139,19 +139,19 @@ pub fn export_sequence(rows: u32, columns: u32, image_path: PathBuf) {
         .trim_matches('"');
     let original_image = image::open(image_path).unwrap().into_rgba8();
 
-    let frame_width = original_image.width() / rows;
-    let frame_height = original_image.height() / columns;
+    let frame_width = original_image.width() / columns;
+    let frame_height = original_image.height() / rows;
 
     let mut images = Vec::new();
 
     for frame in 0..rows * columns {
-        let row = frame % columns;
-        let column = frame / rows;
+        let row = frame / columns;
+        let column = frame % columns;
 
         let sub_image = imageops::crop_imm(
             &original_image,
-            row * frame_width,
-            column * frame_height,
+            column * frame_width,
+            row * frame_height,
             frame_width,
             frame_height,
         );
