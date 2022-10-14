@@ -1,0 +1,10 @@
+[package]
+name = "roblox-flipbook-packer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+eframe = "0.19.0"
+egui = "0.19.0"
+image = "0.24.3"
+rfd = "0.10.0"
