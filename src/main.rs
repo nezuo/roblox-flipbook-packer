@@ -1,13 +1,13 @@
-#![windows_subsystem = "windows"]
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod export;
 
 use std::path::PathBuf;
 
 use eframe::{CreationContext, Frame, NativeOptions};
-use egui::{Button, CentralPanel, Context, TextureHandle, Ui, Vec2};
+use egui::{Button, CentralPanel, Context, TextureHandle, TextureOptions, Ui, Vec2};
 
-fn main() {
+fn main() -> Result<(), eframe::Error> {
     eframe::run_native(
         "Roblox Flipbook Packer",
         NativeOptions::default(),
@@ -56,33 +56,39 @@ impl App {
             ui.horizontal(|ui| {
                 if ui.button("Import").clicked() {
                     self.image_path = rfd::FileDialog::new().pick_file();
-                    self.sequence_path = None;
 
-                    let texture = ui.ctx().load_texture(
-                        "",
-                        load_image_from_path(self.image_path.as_ref().unwrap()).unwrap(),
-                        egui::TextureFilter::Linear,
-                    );
+                    if self.image_path.is_some() {
+                        self.sequence_path = None;
 
-                    self.textures = vec![texture];
+                        let texture = ui.ctx().load_texture(
+                            "",
+                            load_image_from_path(self.image_path.as_ref().unwrap()).unwrap(),
+                            TextureOptions::LINEAR,
+                        );
+
+                        self.textures = vec![texture];
+                    }
                 }
 
                 if ui.button("Import Sequence").clicked() {
                     self.sequence_path = rfd::FileDialog::new().pick_files();
-                    self.image_path = None;
 
-                    self.textures = Vec::new();
+                    if self.sequence_path.is_some() {
+                        self.image_path = None;
 
-                    let paths = self.sequence_path.as_ref().unwrap();
+                        self.textures = Vec::new();
 
-                    for path in paths {
-                        let texture = ui.ctx().load_texture(
-                            "",
-                            load_image_from_path(path).unwrap(),
-                            egui::TextureFilter::Linear,
-                        );
+                        let paths = self.sequence_path.as_ref().unwrap();
 
-                        self.textures.push(texture);
+                        for path in paths {
+                            let texture = ui.ctx().load_texture(
+                                "",
+                                load_image_from_path(path).unwrap(),
+                                TextureOptions::LINEAR,
+                            );
+
+                            self.textures.push(texture);
+                        }
                     }
                 }
             });

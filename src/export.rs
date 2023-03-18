@@ -30,12 +30,7 @@ pub fn sequence_to_frames(image_paths: Vec<PathBuf>) -> Vec<ImageBuffer<Rgba<u8>
             ((frame_size * smaller / higher) as u32, frame_size as u32)
         };
 
-        image = imageops::resize(
-            &image,
-            frame_width as u32,
-            frame_height as u32,
-            FilterType::CatmullRom,
-        );
+        image = imageops::resize(&image, frame_width, frame_height, FilterType::CatmullRom);
 
         frames.push(image);
     }
@@ -60,22 +55,25 @@ pub fn image_to_frames(
 
     let mut image = image::open(image_path).unwrap().into_rgba8();
 
-    let old_frame_width = image.width() / rows;
-    let old_frame_height = image.height() / columns;
-
-    let smaller = old_frame_width.min(old_frame_height) as f64;
-    let higher = old_frame_width.max(old_frame_height) as f64;
+    let old_frame_width = (image.width() / columns) as f64;
+    let old_frame_height = (image.height() / rows) as f64;
 
     let (frame_width, frame_height) = if old_frame_width > old_frame_height {
-        ((frame_size * smaller / higher) as u32, frame_size as u32)
+        (
+            frame_size as u32,
+            (frame_size * old_frame_height / old_frame_width) as u32,
+        )
     } else {
-        (frame_size as u32, (frame_size * smaller / higher) as u32)
+        (
+            (frame_size * old_frame_width / old_frame_height) as u32,
+            frame_size as u32,
+        )
     };
 
     image = imageops::resize(
         &image,
-        columns * frame_width as u32,
-        rows * frame_height as u32,
+        columns * frame_width,
+        rows * frame_height,
         FilterType::CatmullRom,
     );
 
@@ -103,7 +101,7 @@ pub fn export_packed(frames: Vec<ImageBuffer<Rgba<u8>, Vec<u8>>>) {
     let frame_count = frames.len();
 
     let (rows_columns, frame_size): (u32, u32) = if frame_count > 16 {
-        (16, 128)
+        (8, 128)
     } else if frame_count > 4 {
         (4, 256)
     } else {
@@ -116,8 +114,8 @@ pub fn export_packed(frames: Vec<ImageBuffer<Rgba<u8>, Vec<u8>>>) {
         let row = frame as u32 / rows_columns;
         let column = frame as u32 % rows_columns;
 
-        let x = column * frame_size;
-        let y = row * frame_size;
+        let x = column * frame_size + (frame_size - image.width()) / 2;
+        let y = row * frame_size + (frame_size - image.height()) / 2;
 
         imageops::overlay(&mut final_image, image, x.into(), y.into())
     }
